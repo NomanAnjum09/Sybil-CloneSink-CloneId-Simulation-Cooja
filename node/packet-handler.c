@@ -26,7 +26,7 @@
  * \addtogroup sdn-wise
  * @{
  */
-
+#include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
 #include "contiki.h"
@@ -50,8 +50,9 @@
 #ifndef DATA_REPLY
 #define DATA_REPLY 0
 #endif
-
-
+int index_p=0;
+bool check_p= false;
+int mmd_count = 0;
 typedef enum conf_id{
   RESET,
   MY_NET,
@@ -81,7 +82,7 @@ const uint8_t conf_size[RULE_TTL+1] =
   sizeof(conf.packet_ttl),
   sizeof(conf.rssi_min),
   sizeof(conf.beacon_period),       
-  sizeof(conf.report_period),  
+  sizeof(conf.report_period),
   sizeof(conf.reset_period),       
   sizeof(conf.rule_ttl)
 };
@@ -94,7 +95,7 @@ const void* conf_ptr[RULE_TTL+1] =
   &conf.packet_ttl,
   &conf.rssi_min,
   &conf.beacon_period,       
-  &conf.report_period, 
+  &conf.report_period,
   &conf.reset_period,      
   &conf.rule_ttl,              
 };
@@ -122,18 +123,70 @@ const void* conf_ptr[RULE_TTL+1] =
   static void handle_response(packet_t*);
   static void handle_open_path(packet_t*);
   static void handle_config(packet_t*);
-
+    static void handle_MMD(packet_t*);
   static void reply_data(packet_t*);
 /*----------------------------------------------------------------------------*/
+
+ static uint8_t flowruleMatrix[10][20];
+  static int totalrule=-1;
+
+  void makeflowrule(uint8_t* mmd_array, int mmd_len){
+	  int i,j,flagForNewRule=1;
+     for(i=0; i<=totalrule; i++){
+      	flagForNewRule =0;
+      	for(j=0;j<mmd_len;j++){
+          	if(flowruleMatrix[i][j]!=mmd_array[j]){
+          		flagForNewRule = 1;
+          		break;
+          	}
+          }
+          if(flagForNewRule == 0){
+          	break;
+          }
+      }
+
+      //new flow rule Entry
+      if(flagForNewRule == 1){
+      	totalrule++;
+
+      	for(i=0; i<mmd_len; i++){
+
+      		flowruleMatrix[totalrule][i]=mmd_array[i];
+
+      	}
+      	flowruleMatrix[totalrule][i+1]=-1;
+
+      }
+
+        }
+
   void 
   handle_packet(packet_t* p)
   {
-    if (p->info.rssi >= conf.rssi_min && p->header.net == conf.my_net){
+    check_p= false;
+    // printf("\nPACKET HANDLER-REPORT :");
+    for (index_p = 0; index_p < blacklistCount; index_p++)
+        {
+           if(blacklistedMotes[index_p].u8[1] == 0)
+             break;
+          // printf(" %d.%d ",blacklistedMotes[index_p].u8[0],blacklistedMotes[index_p].u8[1] );
+          if (address_cmp(&blacklistedMotes[index_p],&conf.my_address) || address_cmp(&blacklistedMotes[index_p],&p->header.src) || address_cmp(&blacklistedMotes[index_p],&p->header.dst))
+          {
+            check_p= true;
+             remove_neighbor(&blacklistedMotes[index_p]);
+            break;
+          }
+        
+      }
+    if ((p->info.rssi >= conf.rssi_min && p->header.net == conf.my_net && !check_p) || p->header.typ == MMD){
+      PRINTF("[RX ]: ");
+      print_packet(p);
+      PRINTF("\n");
       if (p->header.typ == BEACON){
         PRINTF("[PHD]: Beacon\n");
         handle_beacon(p);
       } else {
-        if (is_my_address(&(p->header.nxh))){
+        if (is_my_address(&(p->header.nxh)) || p->header.typ == MMD ){
           switch (p->header.typ){
             case DATA:
             PRINTF("[PHD]: Data\n");
@@ -154,6 +207,16 @@ const void* conf_ptr[RULE_TTL+1] =
             PRINTF("[PHD]: Config\n");
             handle_config(p);
             break;
+       
+ 	    case MMD:
+            PRINTF("[PHD]: MMD\n");
+            handle_MMD(p);
+            break;
+      case SYBIL:
+      PRINTF("[PHD]: SYBIL\n");
+            handle_MMD(p);
+            break;
+
 
             default:
             PRINTF("[PHD]: Request/Report\n");
@@ -222,8 +285,10 @@ const void* conf_ptr[RULE_TTL+1] =
       stat.total_rtt  = stat.total_rtt + stat.rtt;
       stat.avr_rtt = stat.total_rtt / stat.nb_pck_recv;
       printf("Received Reply Data seq_no: %d,", get_payload_at(p, p->header.len - PLD_INDEX - 1));
-      printf("s %d,r %d,rtt %lu,avr_rtt %lu\n", stat.nb_pck_sent, stat.nb_pck_recv,
-       (1000*stat.rtt)/CLOCK_SECOND, (1000*stat.avr_rtt)/CLOCK_SECOND); /*rtt in ms*/
+     
+ printf("s %d,r %d,rttactual %lu,avr_rttactual %lu, rtt %lu, avr_rtt %lu, sent_time %lu, received_time %lu, CLOCK_SECOND %lu \n", stat.nb_pck_sent, stat.nb_pck_recv,
+       (1000*stat.rtt)/CLOCK_SECOND, (1000*stat.avr_rtt)/CLOCK_SECOND, stat.rtt, stat.avr_rtt,
+             stat.sent_time, stat.received_time, CLOCK_SECOND); /*rtt in ms*/
 #endif
 #endif
       packet_deallocate(p);
@@ -233,18 +298,151 @@ const void* conf_ptr[RULE_TTL+1] =
   }
 /*----------------------------------------------------------------------------*/
   void
+  handle_SYBIL(packet_t* p)
+  {
+    // #if SINK
+// //    print_packet(p);
+//     to_controller(p);
+//     packet_deallocate(p);
+// #else 
+   
+    // printf("\n[MMD]:");
+    // print_packet(p);
+    printf("(handle_SYBIL) NODE NUMBER: %d.%d Count = %d\n", conf.my_address.u8[0], conf.my_address.u8[1],mmd_count);
+    // p->header.nxh = conf.nxh_vs_sink;
+    int y=0;
+    blacklistCount = 0;
+    for(y=1; y<=(int)p->payload[0]; y++){
+        if(p->payload[y] == 1)
+	continue;
+    	blacklistedMotes[y-1].u8[0] = 0;
+    	blacklistedMotes[y-1].u8[1] = p->payload[y];
+      remove_neighbor(&blacklistedMotes[y-1]);
+      blacklistCount++;
+    }
+
+    p->header.net = conf.my_net;
+    p->header.src = conf.my_address;
+    p->header.nxh = conf.sink_address;
+    p->header.typ = MMD;
+    p->info.rssi = 0;
+    set_broadcast_address(&(p->header.dst));
+
+    mmd_count++;
+  
+    
+    if(mmd_count<5)
+    rf_broadcast_send(p);
+    
+// #endif 
+  }
+
+
+
+  void
+  handle_MMD(packet_t* p)
+  {
+    // #if SINK
+// //    print_packet(p);
+//     to_controller(p);
+//     packet_deallocate(p);
+// #else 
+   
+    // printf("\n[MMD]:");
+    // print_packet(p);
+    printf("(handle_MMD) NODE NUMBER: %d.%d Count = %d\n", conf.my_address.u8[0], conf.my_address.u8[1],mmd_count);
+    // p->header.nxh = conf.nxh_vs_sink;
+    int y=0;
+    blacklistCount = 0;
+    for(y=1; y<=(int)p->payload[0]; y++){
+        if(p->payload[y] == 1)
+	continue;
+    	blacklistedMotes[y-1].u8[0] = 0;
+    	blacklistedMotes[y-1].u8[1] = p->payload[y];
+      remove_neighbor(&blacklistedMotes[y-1]);
+      blacklistCount++;
+    }
+
+    p->header.net = conf.my_net;
+    p->header.src = conf.my_address;
+    p->header.nxh = conf.sink_address;
+    p->header.typ = MMD;
+    p->info.rssi = 0;
+    set_broadcast_address(&(p->header.dst));
+
+    mmd_count++;
+  
+    
+    if(mmd_count<5)
+    rf_broadcast_send(p);
+    
+// #endif 
+  }
+  /*----------------------------------------------------------------------------*/
+   int errorcheck(packet_t* p){
+	  int flag=1;
+	  if(totalrule!=-1){
+		  	          	int i,j;
+	  	 	          	if(p->header.typ == REPORT && totalrule!=-1){
+
+
+	  	 	          		for( i=0 ;i<=totalrule ;i++ ){
+	  	 	          			flag=1;
+	  	 	          			for( j=4;j<(p->header.len - PLD_INDEX)&&flowruleMatrix[i][j-2]!=-1;j++){
+	  	 	          			printf("flowruleMatrix[i][%d] = %d \n",j-2,flowruleMatrix[i][j-2]);
+	  	 	          			printf("get_payload_at(p,%d)  = %d \n",j,get_payload_at(p,j));
+	  	 	          				if(flowruleMatrix[i][j-2] != get_payload_at(p,j)){
+	  	 	          					printf("in\n");
+	  	 	          					flag=0;//unmatch
+	  	 	          					break;
+	  	 	          				}
+	  	 	          			}
+	  	 	          			if(flag==1){
+	  	 	          				break;
+	  	 	          			}
+	  	 	          		}
+	  	 	          	}
+	  	 	  }
+	  printf("flag = %d\n",flag);
+	  printf("totoalRule = %d\n",totalrule);
+
+
+	  if(flag==0){
+		  return 1; //true
+	  }else{
+
+		  return 0; //false
+	  }
+
+  }
+
+  void
   handle_report(packet_t* p)
   {
-#if SINK
-//    print_packet(p);
-    to_controller(p);
-    packet_deallocate(p);
-#else 
-    
-    p->header.nxh = conf.nxh_vs_sink;
-    rf_unicast_send(p);
-#endif  
+        int a=2;
+			 if(totalrule != -1 ){
+				 a=errorcheck(p);
+			 }
+
+			if(a!=0){
+
+
+					#if SINK
+						//    print_packet(p);
+						to_controller(p);
+						packet_deallocate(p);
+					#else
+
+						p->header.nxh = conf.nxh_vs_sink;
+						rf_unicast_send(p);
+					#endif
+			}else{
+						printf("PACKET DROUP %d.%d",p->header.src.u8[0], p->header.src.u8[1]);
+						packet_deallocate(p);
+			}
   }
+/*----------------------------------------------------------------------------*/
+
 /*----------------------------------------------------------------------------*/
   void
   handle_response(packet_t* p)
@@ -389,7 +587,7 @@ const void* conf_ptr[RULE_TTL+1] =
           case PACKET_TTL:
           case RSSI_MIN:
           case BEACON_PERIOD:
-          case REPORT_PERIOD:
+          case REPORT_PERIOD: //defining case
           case RULE_TTL:
           // TODO check payload size
           if (conf_size[id] == 1){
@@ -434,7 +632,7 @@ const void* conf_ptr[RULE_TTL+1] =
           case PACKET_TTL:
           case RSSI_MIN:
           case BEACON_PERIOD:
-          case REPORT_PERIOD:
+          case REPORT_PERIOD:  //defining case
           case RESET_PERIOD:
           case RULE_TTL:
           if (conf_size[id] == 1){

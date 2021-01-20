@@ -1,32 +1,3 @@
-/*
-* Copyright (C) 2015 SDN-WISE
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-/**
-* \file
-*         SDN-WISE Address.
-* \author
-*         Sebastiano Milardo <s.milardo@hotmail.it>
-*/
-
-/**
-* \addtogroup sdn-wise
-* @{
-*/
-
 #include <string.h>
 #include <stdio.h>
 
@@ -47,7 +18,7 @@
 
 /*----------------------------------------------------------------------------*/
   LIST(address_list);
-  MEMB(addresses_memb, accepted_address_t, 4);
+  MEMB(addresses_memb, accepted_address_t, 8);
 /*----------------------------------------------------------------------------*/
   static void accepted_address_free(accepted_address_t*);
   static accepted_address_t * accepted_address_allocate(void);
@@ -207,6 +178,28 @@
       }
     }
     return 1;
+  }
+/*----------------------------------------------------------------------------*/
+ uint8_t 
+ get_address(address_t* a)
+  {
+ 
+    return a->u8[1];
+    
+  }
+/*----------------------------------------------------------------------------*/
+void 
+ set_address(address_t* a,uint8_t b)
+  {
+ 
+    a->u8[1] = b;
+    
+  }
+/*----------------------------------------------------------------------------*/
+ uint8_t 
+  get_my_address()
+  {
+    return get_address(&(conf.my_address));
   }
 /*----------------------------------------------------------------------------*/
   void 

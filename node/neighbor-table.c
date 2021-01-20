@@ -32,6 +32,7 @@
 #include "lib/memb.h"
 #include "lib/list.h"
 
+#include "adapter.h"
 #include "packet-buffer.h"
 #include "neighbor-table.h"
 #include "packet-creator.h"
@@ -54,6 +55,7 @@
   static neighbor_t * neighbor_allocate(void);
   static void neighbor_free(neighbor_t *);
   static void print_neighbor(neighbor_t*);
+ 
 /*----------------------------------------------------------------------------*/
   static void 
   print_neighbor(neighbor_t* n)
@@ -86,6 +88,28 @@
     }
   }
 /*----------------------------------------------------------------------------*/
+
+  void
+  remove_neighbor(address_t* a)
+  {
+      
+       if(a->u8[1] == 1)
+	 return;
+    printf("in function Remove neighbor:\n");
+    print_address(a);
+    neighbor_t* tmp;
+    for(tmp = list_head(neighbor_table); tmp != NULL; tmp = tmp->next) {
+      if(address_cmp(&(tmp->address),a)){
+        printf("Removing Neighbor: ");
+        print_address(&(tmp->address));
+        printf("\n");
+         neighbor_free(tmp);
+        
+      }  
+    }
+   
+  }
+  /*----------------------------------------------------------------------------*/
   static neighbor_t *
   neighbor_allocate(void)
   {
@@ -142,7 +166,7 @@
     }  
   }
 /*----------------------------------------------------------------------------*/
-  void
+  int
   fill_payload_with_neighbors(packet_t* p)
   {
     uint8_t i = REPORT_INIT_INDEX;
@@ -155,9 +179,11 @@
         set_payload_at(p,i,n->address.u8[j]);
         ++i;
       }
+
       set_payload_at(p,i,n->rssi);
       ++i;
     }
+    return i;
       //TODO BUG
    // purge_neighbor_table();
   }

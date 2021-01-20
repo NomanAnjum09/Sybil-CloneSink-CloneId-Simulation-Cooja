@@ -1,5 +1,5 @@
 #!/bin/bash
-TARGET="z1"
+TARGET="sky"
 COOJA_BUILD=1
 SDN_WISE_DEBUG=1
 TRICKLE_ON=0

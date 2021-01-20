@@ -53,6 +53,9 @@
   uint8_t address_cmp(address_t*, address_t*);
   void print_address(address_t*);
   void swap_addresses(address_t*,address_t*);
+  uint8_t  get_address(address_t* a);
+  void set_address(address_t* a,uint8_t b);
+  uint8_t get_my_address();
 
   /* Accepted Address API. */  
   void address_list_init(void);

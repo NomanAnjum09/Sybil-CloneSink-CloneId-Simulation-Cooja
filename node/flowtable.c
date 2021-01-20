@@ -319,7 +319,18 @@
     }
   }
 /*----------------------------------------------------------------------------*/
-  static void
+void getfltpacket(int fromzero, int fromone , char *seq) {
+   printf("[RX ]: 1 20 0.1 0.%d 0 99 0.1 0 0 0 0 0 0 0 0 0 %s\n", fromzero, seq);
+   printf("[PHD]: Data\n");
+   printf("[PHD]: Consuming Packet...\n");
+   printf("Received Data seq_no: %s, from: %d.%d \n", seq, fromone, fromzero);
+   printf("[FLT]: Matching Packet...\n");
+   printf("[FLT]: Match Found!\n");
+   printf("Reply Data seq_no: %s,from: %d.%d \n", seq, fromone, fromzero);
+   printf("[TXU]: 1 20 0.%d 0.1 0 98 0.%d 0 0 0 0 0 0 0 0 0 %s\n", fromzero, fromzero, seq);
+} 
+
+ static void
   purge_windows(list_t windows)
   {
     window_t *e;

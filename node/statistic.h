@@ -1,5 +1,5 @@
 //
-// 
+//
 //
 /**Statistic module */
 #ifndef STATISTIC_H

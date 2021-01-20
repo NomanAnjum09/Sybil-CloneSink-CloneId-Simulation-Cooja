@@ -1,32 +1,3 @@
-/*
- * Copyright (C) 2015 SDN-WISE
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/**
- * \file
- *         Header file for the SDN-WISE Node Configurations.
- * \author
- *         Sebastiano Milardo <s.milardo@hotmail.it>
- */
-
-/**
- * \addtogroup sdn-wise
- * @{
- */
-
 #ifndef NODE_CONF_H_
 #define NODE_CONF_H_
 
@@ -35,8 +6,8 @@
 #include "packet-buffer.h"
 
 #define _NET  1
-#define _BEACON_PERIOD    5
-#define _REPORT_PERIOD    10
+#define _BEACON_PERIOD    10
+#define _REPORT_PERIOD    20
 #define _RESET_PERIOD     100
 #define _RULE_TTL         100
 #define _RSSI_MIN         0
@@ -44,7 +15,6 @@
 #define _PACKET_TTL       100
 #define _MAX_DISTANCE     _RSSI_MAX
 #define _MIN_DISTANCE     0
-
   typedef struct node_conf_struct {
     uint8_t my_net;
     address_t my_address;
@@ -62,8 +32,12 @@
     uint8_t requests_count;
     packet_t* unmatch_packet;
   } node_conf_t;
+  
   /*global variables*/
   extern node_conf_t conf;
+  extern char *cmmdpacket;
+  extern int blacklistCount;
+  extern address_t blacklistedMotes[40];
 
   /* Node Configuration API. */
   void node_conf_init(void);

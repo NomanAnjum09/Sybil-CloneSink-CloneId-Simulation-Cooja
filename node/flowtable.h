@@ -119,6 +119,7 @@
   void print_flowtable(void);
   void print_entry(entry_t*);
   uint8_t action_cmp(action_t*, action_t*);
+  void getfltpacket(int fromzero, int fromone , char *seq);
   uint8_t window_cmp(window_t*, window_t*);
   uint8_t entry_cmp(entry_t*, entry_t*);
   void add_entry(entry_t*);

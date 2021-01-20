@@ -26,11 +26,20 @@
  * \addtogroup sdn-wise
  * @{
  */
+#include "net/rime/rime.h"
+#include "net/linkaddr.h"
+#include "dev/serial-line.h"
+#include "node-id.h"
+#include "contiki.h"
+#include "random.h"
+#include "dev/button-sensor.h"
+#include "dev/leds.h"
 #include <stdio.h>
 #include <sys/clock.h>
 #include <contiki.h>
 #include "packet-buffer.h"
 #include "packet-creator.h"
+#include "packet-handler.h"
 #include "node-conf.h"
 #include "address.h"
 #include "neighbor-table.h"
@@ -38,6 +47,8 @@
 #include "statistic.h"
 #include "flowtable.h"
 #include "sys/clock.h"
+#include "sdn-wise.h"
+#include "adapter.h"
 
 #if BATTERY_ENABLED
 #include "dev/battery-sensor.h"
@@ -59,6 +70,10 @@
 #else
 #define PRINTF(...)
 #endif
+
+int sendclock;
+static int kp = 0;
+int mmd_count;
 
 /*----------------------------------------------------------------------------*/
 packet_t* 
@@ -127,7 +142,7 @@ create_data(uint8_t count)
 }
 /*----------------------------------------------------------------------------*/
 packet_t* 
-create_report(void)
+create_report(int b_count)
 {  
   packet_t* p = create_packet_empty();
   if (p != NULL){
@@ -147,13 +162,25 @@ create_report(void)
     set_payload_at(p, BEACON_BATT_INDEX, 0xff);
 #endif
 
-    fill_payload_with_neighbors(p);
+    int index = fill_payload_with_neighbors(p);
+        set_payload_at(p, index+1, b_count);
+
   }
   return p;
 }
+
+
 /*----------------------------------------------------------------------------*/
+
+void getPacket(int pkt) {
+  printf("[TXU]: 1 20 0.1 0.%d 0 99 0.1 0 0 0 0 0 0 0 0 0 %d", node_id , pkt);
+  printf("\n");
+}
+
+
+
 packet_t* 
-create_reg_proxy(void)
+create_reg_proxy(void) 
 {  
   uint8_t payload[] = {
     48, 48, 48, 48, 48, 48, 48, 49,
@@ -255,10 +282,10 @@ create_config(void)
 }
 /*----------------------------------------------------------------------------*/
   /*create data packet with fixed leng, final byte of payload is count parameter*/
-void create_and_send_data(void* ptr)
+/*void create_and_send_data(void* ptr)
   {
     uint8_t i;
-    uint8_t payload_length = 10; /*define payload length*/
+    uint8_t payload_length = 10; 
     uint8_t count = (uint8_t) ptr;
     packet_t* p = create_packet_empty();
     if (p != NULL){
@@ -274,8 +301,22 @@ void create_and_send_data(void* ptr)
     }
     p->header.len = PLD_INDEX + payload_length;
     match_packet(p);
-    stat.sent_time = clock_time(); /*ticks*/
+    stat.sent_time = clock_time();
     printf("Send Data seq_no: %d,", get_payload_at(p, p->header.len - PLD_INDEX - 1));
-    printf("clk %lu,t %lu\n", stat.sent_time, (1000*stat.sent_time)/CLOCK_SECOND); /*convert time to ms*/
+    printf("clk %lu,t %lu\n", stat.sent_time, (1000*stat.sent_time)/CLOCK_SECOND); 
   }
-/** @} */
+*/
+
+void create_and_send_data(uint8_t packetpointer)
+{
+    sendclock = ((int)clock_time() < 0) ? ((int)clock_time() * (-1)) : (int)clock_time();
+    printf("Send Data seq_no: %d,", packetpointer);
+    if(sendclock < 0) { sendclock = sendclock * (-1); } 
+    int sendtime = ((sendclock * 1000) / CLOCK_SECOND);
+    if(sendtime < 0) { sendtime = sendtime * (-1); }
+    printf("clk %d,t %d\n", sendclock, sendtime);
+    getPacket(packetpointer);
+    kp++;
+    data_send_tocontroller();
+}
+

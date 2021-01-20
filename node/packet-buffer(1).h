@@ -25,9 +25,7 @@
     RESPONSE,
     OPEN_PATH,
     CONFIG,
-    REG_PROXY,
-    MMD,
-    SYBIL
+    REG_PROXY
   } packet_type_t;
 
   typedef struct __attribute__((__packed__)) packet_info {
@@ -53,8 +51,6 @@
 
 /* Header API. */
   packet_t* get_packet_from_array(uint8_t*);
-  packet_t* get_MMD_from_array(uint8_t* mmd_array, int mmd_len);
-  packet_t* get_SYBIL_from_array(uint8_t* mmd_array, int mmd_len);
   uint8_t get_payload_at(packet_t*, uint8_t);
   void set_payload_at(packet_t*, uint8_t, uint8_t);
   void restore_ttl(packet_t*);
@@ -69,7 +65,7 @@
   void packet_buffer_init(void);
   void print_packet(packet_t*);
   void print_packet_uart(packet_t*);
-  void print_MMD(packet_t *p);
+
   void test_packet_buffer(void);
 
 #endif /* PACKET_BUFFER_H_ */

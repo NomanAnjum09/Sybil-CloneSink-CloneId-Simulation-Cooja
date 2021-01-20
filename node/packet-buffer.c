@@ -45,10 +45,10 @@
 #else
 #define PRINTF(...)
 #endif
-
+int pkt = 0;
 /*----------------------------------------------------------------------------*/
 // TODO increase buffer size -> better performance ?
-  MEMB(packets_memb, packet_t, 4); /*original value = 4*/
+  MEMB(packets_memb, packet_t, 8); /*original value = 4*/
 /*----------------------------------------------------------------------------*/
   static packet_t * packet_allocate(void);
 /*----------------------------------------------------------------------------*/
@@ -79,13 +79,32 @@
       PRINTF("%d ",get_payload_at(p,i));
     }
   }
+ /*---------------------- PRINT MMD ----------------------------------*/
+  void 
+  print_MMD(packet_t* p)
+  {
+    printf("MMD_Packet->header.typ: MMD\n");
+    printf("MMD_Packet->header.src.u8[1]: %d\n", p->header.src.u8[1]);
+    printf("MMD_Packet->payload: ");
+    int i=0;
+    for(i=0; i<p->payload[0]+1; i++){
+        if(i == 0){
+          printf("%d mmd nodes, ", p->payload[i]);
+        }
+        else{
+          printf("%d.%d ", 0, p->payload[i]);
+        }
+    }
+    printf("\n");
+  }
+/*----------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------*/
   static packet_t *
   packet_allocate(void)
   {
     packet_t *p = NULL;
     p = memb_alloc(&packets_memb);
-    if(p == NULL) {
+    if(p == NULL && pkt==1) {
       PRINTF("[PBF]: Failed to allocate a packet\n");
     }
     return p;
@@ -95,7 +114,7 @@
   packet_deallocate(packet_t* p)
   {
     int res = memb_free(&packets_memb, p); 
-    if (res !=0){
+    if (res !=0 && pkt==1) {
       PRINTF("[FLT]: Failed to deallocate a packet. Reference count: %d\n",res);
     }
   }
@@ -126,6 +145,54 @@
     }
     return p;
   }
+/*--------------------------- MMD PACKET -----------------------------------*/
+  packet_t* 
+  get_MMD_from_array(uint8_t* mmd_array, int mmd_len)
+  {
+    // TODO fragmentation
+    // This works if the compiler complies with __attribute__((__packed__))
+    packet_t *p = packet_allocate();
+    p->header.src.u8[1] = mmd_array[1]; // 1
+    p->header.typ = MMD;
+    p->info.rssi = 0;
+    int i = 0;
+    // mmd_array[0] == 9
+    // mmd_array[1] == 1
+    // mmd_array[2].. == blacklisted nodes
+    uint8_t number_of_mmd = (uint8_t)(mmd_len-2);
+    p->payload[0] = number_of_mmd;
+    for(i=2; i<mmd_len; i++){
+        p->payload[i-1] = mmd_array[i];
+    }
+
+    print_MMD(p);
+
+    return p;
+  }
+    packet_t* 
+  get_SYBIL_from_array(uint8_t* mmd_array, int mmd_len)
+  {
+    // TODO fragmentation
+    // This works if the compiler complies with __attribute__((__packed__))
+    packet_t *p = packet_allocate();
+    p->header.src.u8[1] = mmd_array[1]; // 1
+    p->header.typ = SYBIL;
+    p->info.rssi = 0;
+    int i = 0;
+    // mmd_array[0] == 9
+    // mmd_array[1] == 1
+    // mmd_array[2].. == blacklisted nodes
+    uint8_t number_of_mmd = (uint8_t)(mmd_len-2);
+    p->payload[0] = number_of_mmd;
+    for(i=2; i<mmd_len; i++){
+        p->payload[i-1] = mmd_array[i];
+    }
+
+    print_MMD(p);
+
+    return p;
+  }
+
 /*----------------------------------------------------------------------------*/
   uint8_t 
   get_payload_at(packet_t* p, uint8_t index)

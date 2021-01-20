@@ -365,19 +365,15 @@ public class NetworkGraph {
 			if(Integer.parseInt(all[pos1+1])==Integer.parseInt(node1rssi) && Integer.parseInt(all[pos2+1])==Integer.parseInt(node2rssi)) {
 				if(Integer.parseInt(key)!=Integer.parseInt(node1) && Integer.parseInt(key)!=Integer.parseInt(node2))
 				System.out.println("Node "+key+" Is Sybil Node");
-				blacklist.add(key);
-				if (blacklist.contains(key)) {
-					if(refTable.containsKey(key)) {
-						refTable.remove(key);	
-					}
-					if (graph.getNode(key) != null) {
-						graph.removeNode(key);
-					}
+	 			if(!blackstring.contains("0."+key))
+				blacklist.add("0."+key);
+	    		String mmdpacket = "9 2 ";
 				
-					if(curTable.containsKey(key)) {
-						curTable.remove(key);
-					}
-				}
+					
+					mmdpacket = mmdpacket + node1 + " " + node2+" "+node2rssi+" "+node2+" "+node1+" "+node1rssi;
+				
+					Loader.controller.sendToNode(mmdpacket.toCharArray());	
+				
 				
 			}
 		}

@@ -46,6 +46,9 @@
 #endif
 /*----------------------------------------------------------------------------*/
   node_conf_t conf;
+char *cmmdpacket;  
+int blacklistCount;
+  address_t blacklistedMotes[40];
 /*----------------------------------------------------------------------------*/
   void
   node_conf_init(void)
@@ -95,7 +98,7 @@
     PRINTF("[CFG]: - Network ID: %d\n[CFG]: - Beacon Period: %d\n[CFG]: - "
       "Report Period: %d\n[CFG]: - Rules TTL: %d\n[CFG]: - Min RSSI: "
       "%d\n[CFG]: - Packet TTL: %d\n[CFG]: - Next Hop -> Sink: ",
-      conf.my_net, conf.beacon_period, conf.report_period, 
+      conf.my_net, conf.beacon_period, conf.report_period,//prining node_conf  info for our packet
       conf.rule_ttl, conf.rssi_min, conf.packet_ttl);
     print_address(&(conf.nxh_vs_sink));
     PRINTF(" (hops: %d, distance: %d)\n", conf.hops_from_sink, conf.distance_from_sink);

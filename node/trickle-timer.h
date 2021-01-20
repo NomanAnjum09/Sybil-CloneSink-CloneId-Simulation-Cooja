@@ -1,5 +1,5 @@
 //
-
+// 
 //
 /*Trickle algorithm implementation in SDN-WISE*/
 #ifndef TRICKLE_TIMER_H
