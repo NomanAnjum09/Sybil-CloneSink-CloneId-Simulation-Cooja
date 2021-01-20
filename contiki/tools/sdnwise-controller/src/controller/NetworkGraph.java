@@ -358,7 +358,7 @@ public class NetworkGraph {
 		String value = entry.getValue();
 		String all[] = (value.split(","));
 		System.out.println(value);
-		int pos1 = ArrayUtils.indexOf(all, node1);
+		int pos1 = ArrayUtils.indexOf(all,node1);
 		int pos2 = ArrayUtils.indexOf(all,node2);
 	
 		if(pos1!=-1 && pos2!=-1) {
@@ -370,7 +370,7 @@ public class NetworkGraph {
 	    		String mmdpacket = "9 2 ";
 				
 					
-					mmdpacket = mmdpacket + node1 + " " + node2+" "+node2rssi+" "+node2+" "+node1+" "+node1rssi;
+					mmdpacket = mmdpacket + node1 + " " + node2+" "+node1rssi+" "+node2+" "+node1+" "+node2rssi;
 				
 					Loader.controller.sendToNode(mmdpacket.toCharArray());	
 				

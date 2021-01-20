@@ -37,7 +37,11 @@
   extern node_conf_t conf;
   extern char *cmmdpacket;
   extern int blacklistCount;
+    extern int sybilCount;
+
   extern address_t blacklistedMotes[40];
+    extern address_t sybillistedMotes[100];
+
 
   /* Node Configuration API. */
   void node_conf_init(void);

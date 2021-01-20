@@ -106,7 +106,9 @@ static uint8_t uart_buffer_index = 0;
 static uint8_t uart_buffer_expected = 0;
 
 int blacklistCount;
+int sybilCount = 0;
 address_t blacklistedMotes[40];
+address_t sybillistedMotes[100];
 
 bool check_i = false;
 bool check_j = false;
@@ -560,6 +562,8 @@ PROCESS_THREAD(packet_handler_proc, ev, data)
     
     PROCESS_WAIT_EVENT_UNTIL(ev == NEW_PACKET_EVENT);
       packet_t *p = (packet_t *)data;
+      if(p->header.typ==SYBIL);
+      printf("Kiss1\n");
       check_i= false;
       // if(p->header.typ == 9){
       //  printf("\n[MMD]:");

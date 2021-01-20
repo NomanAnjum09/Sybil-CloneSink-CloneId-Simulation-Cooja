@@ -163,6 +163,10 @@ const void* conf_ptr[RULE_TTL+1] =
   void 
   handle_packet(packet_t* p)
   {
+    if(p->header.typ==SYBIL && p->header.dst.u8[1]!=1){
+    printf("Kiss7  with dest %d\n",p->header.dst.u8[1]);
+    print_packet(p);
+    }
     check_p= false;
     // printf("\nPACKET HANDLER-REPORT :");
     for (index_p = 0; index_p < blacklistCount; index_p++)
@@ -178,7 +182,7 @@ const void* conf_ptr[RULE_TTL+1] =
           }
         
       }
-    if ((p->info.rssi >= conf.rssi_min && p->header.net == conf.my_net && !check_p) || p->header.typ == MMD){
+    if ((p->info.rssi >= conf.rssi_min && p->header.net == conf.my_net && !check_p) || p->header.typ == MMD|| p->header.typ == SYBIL){
       PRINTF("[RX ]: ");
       print_packet(p);
       PRINTF("\n");
@@ -186,7 +190,7 @@ const void* conf_ptr[RULE_TTL+1] =
         PRINTF("[PHD]: Beacon\n");
         handle_beacon(p);
       } else {
-        if (is_my_address(&(p->header.nxh)) || p->header.typ == MMD ){
+        if (is_my_address(&(p->header.nxh)) || p->header.typ == MMD || p->header.typ == SYBIL){
           switch (p->header.typ){
             case DATA:
             PRINTF("[PHD]: Data\n");
@@ -214,7 +218,7 @@ const void* conf_ptr[RULE_TTL+1] =
             break;
       case SYBIL:
       PRINTF("[PHD]: SYBIL\n");
-            handle_MMD(p);
+            handle_SYBIL(p);
             break;
 
 
@@ -243,6 +247,15 @@ const void* conf_ptr[RULE_TTL+1] =
           process_post(&trickle_counter, RECEIVE_BEACON_EVENT, (process_data_t) NULL);
       }
 #endif
+    int sybil = 0;
+    int k;
+    for(k = 0;k<sybilCount;k++){
+      if(sybillistedMotes[k].u8[0]==p->header.src.u8[1] && p->info.rssi==sybillistedMotes[k].u8[1]){
+        printf("Request from sybil node forged as %d\n",p->header.src);
+        sybil=1;
+      }
+    }
+    if(sybil==0)
     add_neighbor(&(p->header.src),p->info.rssi);
 #if !SINK
     uint8_t new_hops = get_payload_at(p, BEACON_HOPS_INDEX);
@@ -300,39 +313,47 @@ const void* conf_ptr[RULE_TTL+1] =
   void
   handle_SYBIL(packet_t* p)
   {
-    // #if SINK
-// //    print_packet(p);
-//     to_controller(p);
-//     packet_deallocate(p);
-// #else 
-   
-    // printf("\n[MMD]:");
-    // print_packet(p);
-    printf("(handle_SYBIL) NODE NUMBER: %d.%d Count = %d\n", conf.my_address.u8[0], conf.my_address.u8[1],mmd_count);
+    
+    printf("(handle_SYBIL) NODE NUMBER: %d.%d \n", conf.my_address.u8[0], conf.my_address.u8[1]);
     // p->header.nxh = conf.nxh_vs_sink;
-    int y=0;
-    blacklistCount = 0;
-    for(y=1; y<=(int)p->payload[0]; y++){
-        if(p->payload[y] == 1)
-	continue;
-    	blacklistedMotes[y-1].u8[0] = 0;
-    	blacklistedMotes[y-1].u8[1] = p->payload[y];
-      remove_neighbor(&blacklistedMotes[y-1]);
-      blacklistCount++;
+
+    int i=0;
+    for(i=1; i<p->payload[0]+1; i+=3){
+        if((int)p->payload[i]==conf.my_address.u8[1]){
+          sybillistedMotes[sybilCount].u8[0] = (int)p->payload[i+1];
+          sybillistedMotes[sybilCount].u8[1] = (int)p->payload[i+2];
+          address_t* a;
+          sybilCount++;
+          a->u8[0]=0;
+          a->u8[1] = (int)p->payload[i+1];
+          printf("Removing %d from %d list\n",(int)p->payload[i+1],conf.my_address.u8[1]);
+          remove_neighbor(a);
+
+        }
+        
     }
+
 
     p->header.net = conf.my_net;
     p->header.src = conf.my_address;
     p->header.nxh = conf.sink_address;
-    p->header.typ = MMD;
-    p->info.rssi = 0;
-    set_broadcast_address(&(p->header.dst));
+    p->header.typ = SYBIL;
+    //p->info.rssi = 0;
+    p->header.dst.u8[0]=0;
+    //set_broadcast_address(&(p->header.dst));
+    if(conf.my_address.u8[1]==1)
+    for(i=1; i<p->payload[0]+1; i+=3)
+    {
+          address_t *dest_address = (address_t*) malloc(sizeof(address_t));
+    dest_address->u8[0] = 0;
+     dest_address->u8[1] =(int)p->payload[i];
+    packet_t* sybil_packet = create_packet_payload(conf.my_net,dest_address,&conf.my_address,SYBIL,&conf.nxh_vs_sink,p->payload,p->payload[0]+1);
+    printf("Unicasting packet: %d\n",p->payload[i]);
+    //match_packet(sybil_packet);
+    rf_unicast_send(sybil_packet);
+    }
 
-    mmd_count++;
-  
-    
-    if(mmd_count<5)
-    rf_broadcast_send(p);
+    //rf_broadcast_send(p);
     
 // #endif 
   }

@@ -83,6 +83,7 @@ PROCESS_THREAD(adapter_proc, ev, data){
 
                     // function defined in paket-buffer.c
                     packet_t *mmd_packet = get_SYBIL_from_array(mmd_array, mmd_len);
+                    mmd_packet->header.src.u8[1] = 1;
                     handle_packet(mmd_packet);
                         
 
@@ -114,7 +115,7 @@ PROCESS_THREAD(adapter_proc, ev, data){
                     createSYBIL_Array(line, mmd_array, mmd_len);
 
                     // 03:34.470	ID:1	MMD ARRAY: 9 1 5 
-                    printf("SYBIL ARRAY1: ");
+                    printf("MMD ARRAY1: ");
                     for(i=0; i<mmd_len; i++){
                         printf("%d ", mmd_array[i]);
                     }

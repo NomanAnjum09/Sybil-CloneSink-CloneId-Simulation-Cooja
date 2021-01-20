@@ -34,6 +34,8 @@
 
 /* Address API. */
 void handle_packet(packet_t*);
+void
+  handle_SYBIL(packet_t* p);
 void test_handle_open_path(void);
 void makeflowrule(uint8_t* mmd_array, int mmd_len);
 int errorcheck(packet_t* p);
