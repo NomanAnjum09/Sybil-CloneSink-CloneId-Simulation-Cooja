@@ -212,7 +212,7 @@ public class NetworkGraph {
 			System.out.println(inComingData);
 			check_sybil1(packet);
 			System.out.println("Checking Report PAcket For sink");
-			//check_sinkHole(packet);
+			check_sinkHole(packet);
 			//setBeaconCount(packet);
 		}
 	//if(packet[4].equals("9")) {
@@ -328,8 +328,9 @@ public class NetworkGraph {
 
  					if(Integer.parseInt(curr)==Integer.parseInt(SENDER)){
  						if(Integer.parseInt(rssi)!=Integer.parseInt(currRSSI)) {
- 							System.out.println("Sybil Attack Detected On Network");
+ 							System.out.println("Identity Attack Detected On Network");
  							RemoveSybilNode(SENDER,currRSSI,negh,rssi);
+ 							RemoveCloneNode(SENDER,currRSSI,negh,rssi);
  						}
  					}
  				}
@@ -350,6 +351,75 @@ public class NetworkGraph {
 		
 	}
 	
+	public void RemoveCloneNode(String node1,String node2rssi,String node2,String node1rssi) {
+		System.out.println("Checking Conflict between node "+node1+" With rssi "+node1rssi+" and node "+node2+" with rssi "+node2rssi);
+		for (ConcurrentHashMap.Entry<String, String> entry : neighborTableRSSI.entrySet()) 
+		{ String key = entry.getKey().toString();
+		String value = entry.getValue();
+		String all[] = (value.split(","));
+		System.out.println(value);
+		int pos1 = ArrayUtils.indexOf(all,node1);
+		int pos2 = ArrayUtils.indexOf(all,node2);
+		
+		if(pos1!=-1 && Integer.parseInt(key)!=Integer.parseInt(node1)&& Integer.parseInt(all[pos1+1])==Integer.parseInt(node1rssi)) {
+			String noNeighbor = neighborTableRSSI.get(node1);
+			int pos3 = ArrayUtils.indexOf(noNeighbor.split(","),key);
+			System.out.print("Exist at: ");
+			System.out.println(pos3);
+if(Integer.parseInt(node1rssi)==Integer.parseInt(all[pos1+1]) && pos3==-1) {
+	
+	System.out.println("Clone Id Attack Detected ON Network");
+	System.out.println("Node "+key+" Is Clonning Node");
+	if(!blackstring.contains("0."+key))
+		blacklist.add("0."+key);
+		String mmdpacket = "9 2 ";
+		
+			
+			mmdpacket = mmdpacket + node1 + " " + node2+" "+node1rssi;
+		
+			Loader.controller.sendToNode(mmdpacket.toCharArray());	
+}
+		}
+		
+		if(pos2!=-1 && Integer.parseInt(key)!=Integer.parseInt(node2)&& Integer.parseInt(all[pos2+1])==Integer.parseInt(node2rssi)) {
+			String noNeighbor = neighborTableRSSI.get(node2);
+			int pos3 = ArrayUtils.indexOf(noNeighbor.split(","),key);
+			System.out.print("Exist at: ");
+			System.out.println(pos3);
+			if(Integer.parseInt(node2rssi)==Integer.parseInt(all[pos2+1]) && pos3==-1) {
+				System.out.println("Clone Id Attack Detected ON Network");
+				System.out.println("Node "+key+" Is Clonning Node");
+				if(!blackstring.contains("0."+key))
+					blacklist.add("0."+key);
+					String mmdpacket = "9 2 ";
+					
+						
+						mmdpacket = mmdpacket + node2 + " " + node1+" "+node2rssi;
+					
+						Loader.controller.sendToNode(mmdpacket.toCharArray());	
+			}
+					}
+	
+	/*	if(pos1!=-1 || pos2!=-1) {
+				if((Integer.parseInt(key)!=Integer.parseInt(node1) && Integer.parseInt(all[pos1+1])==Integer.parseInt(node1rssi) ) || (Integer.parseInt(key)!=Integer.parseInt(node2)) && Integer.parseInt(all[pos2+1])==Integer.parseInt(node2rssi))
+				{
+					System.out.println("Clone Id Attack Detected ON Network");
+					System.out.println("Node "+key+" Is Sybil Node");
+				}if(!blackstring.contains("0."+key))
+				blacklist.add("0."+key);
+	    		String mmdpacket = "9 2 ";
+				
+					
+					mmdpacket = mmdpacket + node1 + " " + node2+" "+node1rssi+" "+node2+" "+node1+" "+node2rssi;
+				
+					Loader.controller.sendToNode(mmdpacket.toCharArray());	
+				
+				
+			
+		}*/
+
+		}
+	}
 	
 	public void RemoveSybilNode(String node1,String node2rssi,String node2,String node1rssi) {
 		System.out.println("Checking Conflict between node "+node1+" With rssi "+node1rssi+" and node "+node2+" with rssi "+node2rssi);
@@ -364,8 +434,10 @@ public class NetworkGraph {
 		if(pos1!=-1 && pos2!=-1) {
 			if(Integer.parseInt(all[pos1+1])==Integer.parseInt(node1rssi) && Integer.parseInt(all[pos2+1])==Integer.parseInt(node2rssi)) {
 				if(Integer.parseInt(key)!=Integer.parseInt(node1) && Integer.parseInt(key)!=Integer.parseInt(node2))
-				System.out.println("Node "+key+" Is Sybil Node");
-	 			if(!blackstring.contains("0."+key))
+				{
+					System.out.println("Sybil Attack Detected ON Network");
+					System.out.println("Node "+key+" Is Sybil Node");
+				}if(!blackstring.contains("0."+key))
 				blacklist.add("0."+key);
 	    		String mmdpacket = "9 2 ";
 				
