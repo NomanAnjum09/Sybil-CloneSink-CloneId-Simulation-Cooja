@@ -357,12 +357,14 @@ public class NetworkGraph {
 		{ String key = entry.getKey().toString();
 		String value = entry.getValue();
 		String all[] = (value.split(","));
+		System.out.print("Node: "+key+",value: ");
 		System.out.println(value);
 		int pos1 = ArrayUtils.indexOf(all,node1);
 		int pos2 = ArrayUtils.indexOf(all,node2);
 		
 		if(pos1!=-1 && Integer.parseInt(key)!=Integer.parseInt(node1)&& Integer.parseInt(all[pos1+1])==Integer.parseInt(node1rssi)) {
 			String noNeighbor = neighborTableRSSI.get(node1);
+			if(noNeighbor!=null) {
 			int pos3 = ArrayUtils.indexOf(noNeighbor.split(","),key);
 			System.out.print("Exist at: ");
 			System.out.println(pos3);
@@ -378,11 +380,12 @@ if(Integer.parseInt(node1rssi)==Integer.parseInt(all[pos1+1]) && pos3==-1) {
 			mmdpacket = mmdpacket + node1 + " " + node2+" "+node1rssi;
 		
 			Loader.controller.sendToNode(mmdpacket.toCharArray());	
-}
+}}
 		}
 		
 		if(pos2!=-1 && Integer.parseInt(key)!=Integer.parseInt(node2)&& Integer.parseInt(all[pos2+1])==Integer.parseInt(node2rssi)) {
 			String noNeighbor = neighborTableRSSI.get(node2);
+			if(noNeighbor!=null) {
 			int pos3 = ArrayUtils.indexOf(noNeighbor.split(","),key);
 			System.out.print("Exist at: ");
 			System.out.println(pos3);
@@ -397,7 +400,7 @@ if(Integer.parseInt(node1rssi)==Integer.parseInt(all[pos1+1]) && pos3==-1) {
 						mmdpacket = mmdpacket + node2 + " " + node1+" "+node2rssi;
 					
 						Loader.controller.sendToNode(mmdpacket.toCharArray());	
-			}
+			}}
 					}
 	
 	/*	if(pos1!=-1 || pos2!=-1) {
@@ -458,6 +461,7 @@ if(Integer.parseInt(node1rssi)==Integer.parseInt(all[pos1+1]) && pos3==-1) {
 	
 	
 	public void check_sinkHole(String[] packet) {
+		System.out.println("Checking for Sinkhole");
 		String SINK = packet[2];
 		String SENDER = packet[3];
 		String HOPS = packet[7];
@@ -469,8 +473,9 @@ if(Integer.parseInt(node1rssi)==Integer.parseInt(all[pos1+1]) && pos3==-1) {
  			System.out.println("Neighbor "+negh+" Of "+SENDER+" has RSSI:->"+rssi );
  			if(blacklist.contains(negh) || rssi != 0)
  				continue;
- 			
+ 			System.out.println(blackstring.contains(SENDER));
  			if(!blackstring.contains(SENDER)) {
+ 				System.out.println("Sinkhole detected by :"+SENDER);;
  				blackstring.add(SENDER);
  			}
  		

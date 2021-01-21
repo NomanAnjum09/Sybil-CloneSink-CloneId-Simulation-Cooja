@@ -180,10 +180,10 @@ const void* conf_ptr[RULE_TTL+1] =
           process_post(&trickle_counter, RECEIVE_BEACON_EVENT, (process_data_t) NULL);
       }
 #endif
-    add_neighbor(&(p->header.src),p->info.rssi);
+    add_neighbor(&(p->header.src),0);
 #if !SINK
     uint8_t new_hops = 0;
-    uint8_t new_distance = 0;
+    uint8_t new_distance =0;
 
     if (address_cmp(&(conf.nxh_vs_sink), &(p->header.src)) ||
 #if MOBILE
@@ -194,7 +194,7 @@ const void* conf_ptr[RULE_TTL+1] =
     )
     {
       conf.nxh_vs_sink = p->header.src;
-      conf.distance_from_sink = 0;
+      conf.distance_from_sink =0;
       conf.sink_address = p->header.nxh;
       conf.hops_from_sink =0;
     }
