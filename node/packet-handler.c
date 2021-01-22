@@ -251,7 +251,7 @@ const void* conf_ptr[RULE_TTL+1] =
     int k;
     for(k = 0;k<sybilCount;k++){
       if(sybillistedMotes[k].u8[0]==p->header.src.u8[1] && p->info.rssi==sybillistedMotes[k].u8[1]){
-        printf("Request from sybil node forged as %d\n",p->header.src);
+        printf("Request from sybil node forged as %d\n",p->header.src.u8[1]);
         sybil=1;
       }
     }
@@ -327,6 +327,7 @@ const void* conf_ptr[RULE_TTL+1] =
           a->u8[0]=0;
           a->u8[1] = (int)p->payload[i+1];
           printf("Removing %d from %d list\n",(int)p->payload[i+1],conf.my_address.u8[1]);
+          print_address(a);
           remove_neighbor(a);
 
         }
@@ -350,10 +351,11 @@ const void* conf_ptr[RULE_TTL+1] =
     packet_t* sybil_packet = create_packet_payload(conf.my_net,dest_address,&conf.my_address,SYBIL,&conf.nxh_vs_sink,p->payload,p->payload[0]+1);
     printf("Unicasting packet: %d\n",p->payload[i]);
     //match_packet(sybil_packet);
-    rf_unicast_send(sybil_packet);
+    //rf_unicast_send(sybil_packet);
+    rf_broadcast_send(sybil_packet);
     }
 
-    //rf_broadcast_send(p);
+
     
 // #endif 
   }

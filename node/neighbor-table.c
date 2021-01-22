@@ -95,7 +95,7 @@
       
        if(a->u8[1] == 1)
 	 return;
-    printf("in function Remove neighbor OF %d:\n");
+    printf("in function Remove neighbor OF:\n");
     print_address(a);
     neighbor_t* tmp;
     for(tmp = list_head(neighbor_table); tmp != NULL; tmp = tmp->next) {
